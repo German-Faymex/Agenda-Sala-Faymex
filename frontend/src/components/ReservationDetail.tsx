@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { Reservation, Employee } from '../types';
 
 interface ReservationDetailProps {
@@ -8,19 +9,22 @@ interface ReservationDetailProps {
   loading: boolean;
 }
 
-function hierarchyLabel(level: number): string {
-  switch (level) {
-    case 1: return 'Dirección';
-    case 2: return 'Gerencia';
-    case 3: return 'Jefatura';
-    default: return 'Empleado';
-  }
+const DAYS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+const MONTHS = [
+  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+];
+
+function formatReadableDate(dateStr: string): string {
+  const d = new Date(dateStr + 'T12:00:00');
+  return `${DAYS[d.getDay()]} ${d.getDate()} de ${MONTHS[d.getMonth()]}`;
 }
 
 export default function ReservationDetail({
   reservation, selectedEmployee, onClose, onCancel, loading
 }: ReservationDetailProps) {
   const isOwner = selectedEmployee?.id === reservation.employee_id;
+  const [confirmCancel, setConfirmCancel] = useState(false);
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
@@ -40,12 +44,8 @@ export default function ReservationDetail({
               <span className="text-sm">{reservation.employee_position}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-sm text-gray-500">Nivel</span>
-              <span className="text-sm">{hierarchyLabel(reservation.employee_hierarchy)}</span>
-            </div>
-            <div className="flex justify-between">
               <span className="text-sm text-gray-500">Fecha</span>
-              <span className="text-sm font-medium">{reservation.date}</span>
+              <span className="text-sm font-medium">{formatReadableDate(reservation.date)}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-sm text-gray-500">Horario</span>
@@ -59,20 +59,36 @@ export default function ReservationDetail({
             )}
           </div>
 
+          {/* Cancel confirmation */}
+          {confirmCancel && (
+            <div className="bg-red-50 border border-red-300 rounded-lg p-3 text-sm text-red-800">
+              <p className="font-semibold">¿Estás seguro?</p>
+              <p>Esta acción no se puede deshacer.</p>
+            </div>
+          )}
+
           <div className="flex gap-3 pt-2">
             <button
-              onClick={onClose}
+              onClick={() => { setConfirmCancel(false); onClose(); }}
               className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50"
             >
               Cerrar
             </button>
-            {isOwner && (
+            {isOwner && !confirmCancel && (
+              <button
+                onClick={() => setConfirmCancel(true)}
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700"
+              >
+                Cancelar Reserva
+              </button>
+            )}
+            {isOwner && confirmCancel && (
               <button
                 onClick={() => onCancel(reservation.id, reservation.employee_id)}
                 disabled={loading}
-                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 disabled:opacity-50"
+                className="flex-1 px-4 py-2 bg-red-700 text-white rounded-lg text-sm font-medium hover:bg-red-800 disabled:opacity-50"
               >
-                {loading ? 'Cancelando...' : 'Cancelar Reserva'}
+                {loading ? 'Cancelando...' : 'Sí, Cancelar'}
               </button>
             )}
           </div>

@@ -8,7 +8,8 @@ interface ToastProps {
 
 export default function Toast({ message, type, onClose }: ToastProps) {
   useEffect(() => {
-    const timer = setTimeout(onClose, 5000);
+    const duration = type === 'warning' ? 8000 : 5000;
+    const timer = setTimeout(onClose, duration);
     return () => clearTimeout(timer);
   }, [onClose]);
 

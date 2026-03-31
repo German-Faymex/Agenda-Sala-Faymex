@@ -14,7 +14,13 @@ export default function EmployeeSelector({ employees, selected, onSelect }: Empl
         value={selected?.id || 0}
         onChange={e => {
           const id = Number(e.target.value);
-          onSelect(employees.find(emp => emp.id === id) || null);
+          const emp = employees.find(emp => emp.id === id) || null;
+          onSelect(emp);
+          if (emp) {
+            localStorage.setItem('agenda_sala_employee_id', String(emp.id));
+          } else {
+            localStorage.removeItem('agenda_sala_employee_id');
+          }
         }}
         className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-faymex-red focus:border-faymex-red max-w-xs"
       >
@@ -25,13 +31,9 @@ export default function EmployeeSelector({ employees, selected, onSelect }: Empl
           </option>
         ))}
       </select>
-      {selected && (
-        <span className="text-xs px-2 py-1 rounded-full bg-faymex-gray text-faymex-black">
-          Nivel {selected.hierarchy_level}: {
-            selected.hierarchy_level === 1 ? 'Dirección' :
-            selected.hierarchy_level === 2 ? 'Gerencia' :
-            selected.hierarchy_level === 3 ? 'Jefatura' : 'Empleado'
-          }
+      {!selected && (
+        <span className="text-xs text-gray-400">
+          Selecciónate para poder reservar y cancelar
         </span>
       )}
     </div>

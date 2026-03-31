@@ -30,6 +30,7 @@ export default function App() {
   const [weekStart, setWeekStart] = useState(getMonday(new Date()));
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
 
   // Modals
   const [newReservation, setNewReservation] = useState<{ date: string; startTime: string } | null>(null);
@@ -39,10 +40,22 @@ export default function App() {
   // Toast
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'warning' } | null>(null);
 
-  // Load initial data
+  // Load initial data + restore identity from localStorage
   useEffect(() => {
-    getEmployees().then(setEmployees).catch(console.error);
-    getSlots().then(setSlots).catch(console.error);
+    Promise.all([
+      getEmployees(),
+      getSlots(),
+    ]).then(([emps, sl]) => {
+      setEmployees(emps);
+      setSlots(sl);
+
+      // Restore saved identity
+      const savedId = localStorage.getItem('agenda_sala_employee_id');
+      if (savedId) {
+        const emp = emps.find(e => e.id === Number(savedId));
+        if (emp) setSelectedEmployee(emp);
+      }
+    }).catch(console.error).finally(() => setInitialLoading(false));
   }, []);
 
   // Load reservations for current week
@@ -57,6 +70,12 @@ export default function App() {
 
   useEffect(() => {
     loadReservations();
+  }, [loadReservations]);
+
+  // Auto-refresh every 30 seconds
+  useEffect(() => {
+    const interval = setInterval(loadReservations, 30000);
+    return () => clearInterval(interval);
   }, [loadReservations]);
 
   // Week navigation
@@ -123,6 +142,17 @@ export default function App() {
     }
   };
 
+  if (initialLoading) {
+    return (
+      <div className="min-h-screen bg-faymex-gray flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-faymex-red border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-sm text-gray-500">Cargando agenda...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-faymex-gray">
       <Header onAdminClick={() => setShowAdmin(true)} />
@@ -149,22 +179,6 @@ export default function App() {
           onReservationClick={setSelectedReservation}
           selectedEmployee={selectedEmployee}
         />
-      </div>
-
-      {/* Legend */}
-      <div className="max-w-7xl mx-auto px-4 py-3 flex gap-4 flex-wrap text-xs text-gray-600">
-        <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded bg-faymex-red" /> Dirección
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded bg-orange-500" /> Gerencia
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded bg-blue-500" /> Jefatura
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded bg-gray-500" /> Empleado
-        </div>
       </div>
 
       {/* Modals */}
