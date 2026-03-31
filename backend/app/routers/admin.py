@@ -72,13 +72,13 @@ async def update_employee(
     return employee
 
 
-@router.delete("/employees/{employee_id}")
-async def deactivate_employee(
+@router.patch("/employees/{employee_id}/toggle")
+async def toggle_employee(
     employee_id: int,
     password: str = Query(...),
     db: AsyncSession = Depends(get_db)
 ):
-    """Deactivate (soft delete) an employee."""
+    """Toggle active/inactive status of an employee."""
     verify_admin(password)
     employee = await db.get(Employee, employee_id)
     if not employee:
@@ -86,6 +86,22 @@ async def deactivate_employee(
     employee.active = not employee.active
     await db.commit()
     return {"message": f"Empleado {'activado' if employee.active else 'desactivado'}"}
+
+
+@router.delete("/employees/{employee_id}")
+async def delete_employee(
+    employee_id: int,
+    password: str = Query(...),
+    db: AsyncSession = Depends(get_db)
+):
+    """Permanently delete an employee."""
+    verify_admin(password)
+    employee = await db.get(Employee, employee_id)
+    if not employee:
+        raise HTTPException(status_code=404, detail="Empleado no encontrado")
+    await db.delete(employee)
+    await db.commit()
+    return {"message": "Empleado eliminado permanentemente"}
 
 
 @router.post("/employees/bulk", response_model=BulkUploadResult)

@@ -65,6 +65,11 @@ export const updateEmployee = (password: string, id: number, data: Omit<import('
   });
 
 export const toggleEmployee = (password: string, id: number) =>
+  request<{ message: string }>(`/api/admin/employees/${id}/toggle?password=${encodeURIComponent(password)}`, {
+    method: 'PATCH',
+  });
+
+export const deleteEmployee = (password: string, id: number) =>
   request<{ message: string }>(`/api/admin/employees/${id}?password=${encodeURIComponent(password)}`, {
     method: 'DELETE',
   });

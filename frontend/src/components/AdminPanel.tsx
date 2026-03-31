@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { Employee } from '../types';
-import { adminLogin, getAdminEmployees, createEmployee, toggleEmployee, bulkUploadEmployees } from '../api';
+import { adminLogin, getAdminEmployees, createEmployee, toggleEmployee, deleteEmployee, bulkUploadEmployees } from '../api';
 
 interface AdminPanelProps {
   onClose: () => void;
@@ -13,10 +13,16 @@ export default function AdminPanel({ onClose }: AdminPanelProps) {
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
 
   // New employee form
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ name: '', email: '', position: '', department: '', hierarchy_level: 4 });
+
+  const reload = async () => {
+    const emps = await getAdminEmployees(password);
+    setEmployees(emps);
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,8 +30,7 @@ export default function AdminPanel({ onClose }: AdminPanelProps) {
     try {
       await adminLogin(password);
       setAuthenticated(true);
-      const emps = await getAdminEmployees(password);
-      setEmployees(emps);
+      await reload();
     } catch (err: any) {
       setError(err.message);
     }
@@ -38,8 +43,7 @@ export default function AdminPanel({ onClose }: AdminPanelProps) {
       await createEmployee(password, form);
       setForm({ name: '', email: '', position: '', department: '', hierarchy_level: 4 });
       setShowForm(false);
-      const emps = await getAdminEmployees(password);
-      setEmployees(emps);
+      await reload();
       setMessage('Empleado creado');
       setTimeout(() => setMessage(''), 3000);
     } catch (err: any) {
@@ -50,8 +54,19 @@ export default function AdminPanel({ onClose }: AdminPanelProps) {
   const handleToggle = async (id: number) => {
     try {
       await toggleEmployee(password, id);
-      const emps = await getAdminEmployees(password);
-      setEmployees(emps);
+      await reload();
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    try {
+      await deleteEmployee(password, id);
+      setConfirmDeleteId(null);
+      await reload();
+      setMessage('Empleado eliminado');
+      setTimeout(() => setMessage(''), 3000);
     } catch (err: any) {
       setError(err.message);
     }
@@ -65,8 +80,7 @@ export default function AdminPanel({ onClose }: AdminPanelProps) {
     try {
       const result = await bulkUploadEmployees(password, file);
       setMessage(`${result.created} empleados creados${result.errors.length ? `. Errores: ${result.errors.join(', ')}` : ''}`);
-      const emps = await getAdminEmployees(password);
-      setEmployees(emps);
+      await reload();
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -164,7 +178,7 @@ export default function AdminPanel({ onClose }: AdminPanelProps) {
                   <th className="text-left px-3 py-2 hidden md:table-cell">Departamento</th>
                   <th className="text-center px-3 py-2">Nivel</th>
                   <th className="text-center px-3 py-2">Estado</th>
-                  <th className="text-center px-3 py-2">Acción</th>
+                  <th className="text-center px-3 py-2">Acciones</th>
                 </tr>
               </thead>
               <tbody>
@@ -180,12 +194,37 @@ export default function AdminPanel({ onClose }: AdminPanelProps) {
                       </span>
                     </td>
                     <td className="px-3 py-2 text-center">
-                      <button
-                        onClick={() => handleToggle(emp.id)}
-                        className={`text-xs px-2 py-1 rounded ${emp.active ? 'text-red-600 hover:bg-red-50' : 'text-green-600 hover:bg-green-50'}`}
-                      >
-                        {emp.active ? 'Desactivar' : 'Activar'}
-                      </button>
+                      <div className="flex gap-1 justify-center">
+                        <button
+                          onClick={() => handleToggle(emp.id)}
+                          className={`text-xs px-2 py-1 rounded ${emp.active ? 'text-orange-600 hover:bg-orange-50' : 'text-green-600 hover:bg-green-50'}`}
+                        >
+                          {emp.active ? 'Desactivar' : 'Activar'}
+                        </button>
+                        {confirmDeleteId === emp.id ? (
+                          <>
+                            <button
+                              onClick={() => handleDelete(emp.id)}
+                              className="text-xs px-2 py-1 rounded bg-red-600 text-white hover:bg-red-700"
+                            >
+                              Confirmar
+                            </button>
+                            <button
+                              onClick={() => setConfirmDeleteId(null)}
+                              className="text-xs px-2 py-1 rounded text-gray-500 hover:bg-gray-100"
+                            >
+                              No
+                            </button>
+                          </>
+                        ) : (
+                          <button
+                            onClick={() => setConfirmDeleteId(emp.id)}
+                            className="text-xs px-2 py-1 rounded text-red-600 hover:bg-red-50"
+                          >
+                            Eliminar
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
