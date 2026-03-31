@@ -139,23 +139,23 @@ export default function ReservationModal({
             </select>
           </div>
 
-          {/* End time with duration */}
+          {/* Duration */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Hasta</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Duración</label>
             <select
               value={endTime}
               onChange={e => { setEndTime(e.target.value); setShowConfirm(false); }}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-faymex-red focus:border-faymex-red"
               required
             >
-              <option value="">Seleccionar hora de fin...</option>
+              <option value="">Seleccionar duración...</option>
               {endTimeOptions.map(et => {
                 const conflict = conflictInfo[et];
                 const blocked = conflict && !conflict.canOverride;
                 const duration = formatDuration(startTime, et);
                 return (
                   <option key={et} value={et} disabled={!!blocked}>
-                    {et} ({duration})
+                    {startTime} - {et} ({duration})
                     {conflict
                       ? conflict.canOverride
                         ? ` — Desplazará a ${conflict.blockedBy}`

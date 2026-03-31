@@ -54,7 +54,7 @@ export default function WeekCalendar({
     <div className="overflow-x-auto">
       <div className="min-w-[700px]">
         {/* Header */}
-        <div className="grid grid-cols-[90px_repeat(5,1fr)] border-b bg-faymex-gray">
+        <div className="grid grid-cols-[90px_repeat(5,1fr)] border-b bg-faymex-gray sticky top-0 z-20">
           <div className="p-3 text-sm font-medium text-gray-500 border-r">Hora</div>
           {dates.map((d, i) => {
             const dateStr = formatDate(d);
@@ -146,14 +146,14 @@ export default function WeekCalendar({
                 return (
                   <div
                     key={i}
-                    className={`border-r last:border-r-0 p-0.5 ${isToday ? 'bg-faymex-red/5' : ''} ${isSlotPast ? 'bg-gray-100' : ''}`}
+                    className={`border-r last:border-r-0 p-1 ${isToday ? 'bg-faymex-red/5' : ''} ${isSlotPast ? 'bg-gray-100' : ''}`}
                   >
                     {!isSlotPast && (
                       <button
                         onClick={() => onSlotClick(dateStr, slot)}
-                        className="w-full h-full min-h-[2.75rem] rounded hover:bg-green-50 hover:border-green-300 border border-transparent transition-colors group"
+                        className="w-full min-h-[2.25rem] rounded-md border border-dashed border-transparent hover:border-green-400 hover:bg-green-50 transition-colors flex items-center justify-center"
                       >
-                        <span className="text-sm text-transparent group-hover:text-green-600 transition-colors">
+                        <span className="text-sm text-transparent hover:text-green-600 transition-colors">
                           Reservar
                         </span>
                       </button>
