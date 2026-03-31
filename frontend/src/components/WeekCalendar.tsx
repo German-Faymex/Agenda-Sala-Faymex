@@ -28,7 +28,6 @@ export default function WeekCalendar({
     });
   }, [weekStart]);
 
-  // Map: date -> slot -> reservation (for ALL slots the reservation covers)
   const reservationMap = useMemo(() => {
     const map: Record<string, Record<string, Reservation>> = {};
     for (const r of reservations) {
@@ -55,19 +54,19 @@ export default function WeekCalendar({
     <div className="overflow-x-auto">
       <div className="min-w-[700px]">
         {/* Header */}
-        <div className="grid grid-cols-[80px_repeat(5,1fr)] border-b bg-faymex-gray">
-          <div className="p-2 text-xs font-medium text-gray-500 border-r">Hora</div>
+        <div className="grid grid-cols-[90px_repeat(5,1fr)] border-b bg-faymex-gray">
+          <div className="p-3 text-sm font-medium text-gray-500 border-r">Hora</div>
           {dates.map((d, i) => {
             const dateStr = formatDate(d);
             const isToday = dateStr === today;
             return (
               <div
                 key={i}
-                className={`p-2 text-center border-r last:border-r-0 ${isToday ? 'bg-faymex-red/10' : ''}`}
+                className={`p-3 text-center border-r last:border-r-0 ${isToday ? 'bg-faymex-red/10' : ''}`}
               >
-                <div className="text-xs text-gray-500 hidden sm:block">{DAYS[i]}</div>
-                <div className="text-xs text-gray-500 sm:hidden">{DAYS_SHORT[i]}</div>
-                <div className={`text-sm font-semibold ${isToday ? 'text-faymex-red' : 'text-faymex-black'}`}>
+                <div className="text-sm text-gray-500 hidden sm:block">{DAYS[i]}</div>
+                <div className="text-sm text-gray-500 sm:hidden">{DAYS_SHORT[i]}</div>
+                <div className={`text-lg font-semibold ${isToday ? 'text-faymex-red' : 'text-faymex-black'}`}>
                   {d.getDate()}
                 </div>
               </div>
@@ -80,18 +79,18 @@ export default function WeekCalendar({
           const [slotH, slotM] = slot.split(':').map(Number);
 
           return (
-            <div key={slot} className="grid grid-cols-[80px_repeat(5,1fr)] border-b relative">
+            <div key={slot} className="grid grid-cols-[90px_repeat(5,1fr)] border-b relative">
               {/* Current time indicator */}
               {slotH === currentHour && currentMinute >= slotM && currentMinute < slotM + 30 && (
                 <div
-                  className="absolute left-[80px] right-0 border-t-2 border-faymex-red z-10 pointer-events-none"
+                  className="absolute left-[90px] right-0 border-t-2 border-faymex-red z-10 pointer-events-none"
                   style={{ top: `${((currentMinute - slotM) / 30) * 100}%` }}
                 >
-                  <div className="w-2 h-2 rounded-full bg-faymex-red -mt-1 -ml-1" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-faymex-red -mt-[5px] -ml-[5px]" />
                 </div>
               )}
 
-              <div className="p-2 text-xs text-gray-500 border-r flex items-center justify-center font-mono">
+              <div className="p-2 text-sm text-gray-500 border-r flex items-center justify-center font-mono">
                 {slot}
               </div>
               {dates.map((d, i) => {
@@ -102,7 +101,6 @@ export default function WeekCalendar({
                 const isFirstSlot = reservation && reservation.start_time === slot;
                 const isCoveredByReservation = reservation && !isFirstSlot;
 
-                // For multi-slot reservations: render empty cell (keeps grid intact)
                 if (isCoveredByReservation) {
                   return (
                     <div
@@ -127,25 +125,24 @@ export default function WeekCalendar({
                     >
                       <button
                         onClick={() => onReservationClick(reservation)}
-                        className={`w-full text-left rounded-md px-2 py-1 text-xs transition-all
+                        className={`w-full text-left rounded-md px-3 py-1.5 text-sm transition-all
                           ${isMyReservation
                             ? 'bg-faymex-red text-white hover:brightness-110'
                             : 'bg-faymex-black/80 text-white hover:bg-faymex-black'}
                         `}
-                        style={{ minHeight: `${spanCount * 2.5}rem` }}
+                        style={{ minHeight: `${spanCount * 2.75}rem` }}
                         title={`${reservation.employee_name} - ${reservation.employee_position}${reservation.subject ? '\n' + reservation.subject : ''}`}
                       >
                         <div className="font-semibold truncate">{reservation.employee_name}</div>
                         {reservation.subject && (
-                          <div className="truncate opacity-80">{reservation.subject}</div>
+                          <div className="truncate opacity-80 text-xs">{reservation.subject}</div>
                         )}
-                        <div className="opacity-70">{reservation.start_time}-{reservation.end_time}</div>
+                        <div className="opacity-70 text-xs">{reservation.start_time}-{reservation.end_time}</div>
                       </button>
                     </div>
                   );
                 }
 
-                // Empty slot
                 return (
                   <div
                     key={i}
@@ -154,9 +151,9 @@ export default function WeekCalendar({
                     {!isSlotPast && (
                       <button
                         onClick={() => onSlotClick(dateStr, slot)}
-                        className="w-full h-full min-h-[2.5rem] rounded hover:bg-green-50 hover:border-green-300 border border-transparent transition-colors group"
+                        className="w-full h-full min-h-[2.75rem] rounded hover:bg-green-50 hover:border-green-300 border border-transparent transition-colors group"
                       >
-                        <span className="text-xs text-transparent group-hover:text-green-600 transition-colors">
+                        <span className="text-sm text-transparent group-hover:text-green-600 transition-colors">
                           Reservar
                         </span>
                       </button>

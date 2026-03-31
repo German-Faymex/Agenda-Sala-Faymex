@@ -21,19 +21,19 @@ export default function WeekNavigator({ weekStart, onPrev, onNext, onToday, canG
     : `${weekStart.getDate()} ${MONTHS[weekStart.getMonth()]} - ${weekEnd.getDate()} ${MONTHS[weekEnd.getMonth()]} ${weekStart.getFullYear()}`;
 
   return (
-    <div className="flex items-center justify-between px-4 py-3 bg-white border-b">
+    <div className="flex items-center justify-between px-4 py-4 bg-white border-b">
       <button
         onClick={onPrev}
         disabled={!canGoPrev}
-        className="px-3 py-1.5 rounded-lg text-sm font-medium border border-gray-300 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
+        className="px-4 py-2 rounded-lg text-base font-medium border border-gray-300 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
       >
         ← Anterior
       </button>
       <div className="flex items-center gap-3">
-        <span className="font-semibold text-faymex-black">{label}</span>
+        <span className="text-lg font-semibold text-faymex-black">{label}</span>
         <button
           onClick={onToday}
-          className="px-2 py-1 text-xs rounded bg-faymex-red text-white hover:bg-faymex-red-dark"
+          className="px-3 py-1.5 text-sm rounded bg-faymex-red text-white hover:bg-faymex-red-dark"
         >
           Hoy
         </button>
@@ -41,7 +41,7 @@ export default function WeekNavigator({ weekStart, onPrev, onNext, onToday, canG
       <button
         onClick={onNext}
         disabled={!canGoNext}
-        className="px-3 py-1.5 rounded-lg text-sm font-medium border border-gray-300 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
+        className="px-4 py-2 rounded-lg text-base font-medium border border-gray-300 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
       >
         Siguiente →
       </button>
