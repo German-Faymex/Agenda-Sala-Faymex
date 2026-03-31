@@ -156,11 +156,7 @@ export default function ReservationModal({
                 return (
                   <option key={et} value={et} disabled={!!blocked}>
                     {startTime} - {et} ({duration})
-                    {conflict
-                      ? conflict.canOverride
-                        ? ` — Desplazará a ${conflict.blockedBy}`
-                        : ` — Ocupado por ${conflict.blockedBy}`
-                      : ''}
+                    {blocked ? ` — Ocupado por ${conflict.blockedBy}` : ''}
                   </option>
                 );
               })}
