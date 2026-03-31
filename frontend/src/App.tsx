@@ -155,20 +155,22 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-faymex-gray">
-      <Header onAdminClick={() => setShowAdmin(true)} />
-      <EmployeeSelector
-        employees={employees}
-        selected={selectedEmployee}
-        onSelect={setSelectedEmployee}
-      />
-      <WeekNavigator
-        weekStart={weekStart}
-        onPrev={goToPrev}
-        onNext={goToNext}
-        onToday={goToToday}
-        canGoNext={canGoNext}
-        canGoPrev={canGoPrev}
-      />
+      <div className="sticky top-0 z-30">
+        <Header onAdminClick={() => setShowAdmin(true)} />
+        <EmployeeSelector
+          employees={employees}
+          selected={selectedEmployee}
+          onSelect={setSelectedEmployee}
+        />
+        <WeekNavigator
+          weekStart={weekStart}
+          onPrev={goToPrev}
+          onNext={goToNext}
+          onToday={goToToday}
+          canGoNext={canGoNext}
+          canGoPrev={canGoPrev}
+        />
+      </div>
 
       <div className="bg-white shadow-sm">
         <WeekCalendar

@@ -54,7 +54,7 @@ export default function WeekCalendar({
     <div className="overflow-x-auto">
       <div className="min-w-[700px]">
         {/* Header */}
-        <div className="grid grid-cols-[90px_repeat(5,1fr)] border-b bg-faymex-gray sticky top-0 z-20">
+        <div className="grid grid-cols-[90px_repeat(5,1fr)] border-b bg-faymex-gray">
           <div className="p-3 text-sm font-medium text-gray-500 border-r">Hora</div>
           {dates.map((d, i) => {
             const dateStr = formatDate(d);
