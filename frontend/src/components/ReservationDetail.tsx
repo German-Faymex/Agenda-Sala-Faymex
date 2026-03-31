@@ -1,0 +1,83 @@
+import type { Reservation, Employee } from '../types';
+
+interface ReservationDetailProps {
+  reservation: Reservation;
+  selectedEmployee: Employee | null;
+  onClose: () => void;
+  onCancel: (reservationId: number, employeeId: number) => void;
+  loading: boolean;
+}
+
+function hierarchyLabel(level: number): string {
+  switch (level) {
+    case 1: return 'Dirección';
+    case 2: return 'Gerencia';
+    case 3: return 'Jefatura';
+    default: return 'Empleado';
+  }
+}
+
+export default function ReservationDetail({
+  reservation, selectedEmployee, onClose, onCancel, loading
+}: ReservationDetailProps) {
+  const isOwner = selectedEmployee?.id === reservation.employee_id;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-md" onClick={e => e.stopPropagation()}>
+        <div className="bg-faymex-black text-white px-6 py-4 rounded-t-xl">
+          <h2 className="text-lg font-bold">Detalle de Reserva</h2>
+        </div>
+
+        <div className="p-6 space-y-4">
+          <div className="space-y-3">
+            <div className="flex justify-between">
+              <span className="text-sm text-gray-500">Reservado por</span>
+              <span className="text-sm font-medium">{reservation.employee_name}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-sm text-gray-500">Cargo</span>
+              <span className="text-sm">{reservation.employee_position}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-sm text-gray-500">Nivel</span>
+              <span className="text-sm">{hierarchyLabel(reservation.employee_hierarchy)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-sm text-gray-500">Fecha</span>
+              <span className="text-sm font-medium">{reservation.date}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-sm text-gray-500">Horario</span>
+              <span className="text-sm font-medium">{reservation.start_time} - {reservation.end_time}</span>
+            </div>
+            {reservation.subject && (
+              <div className="flex justify-between">
+                <span className="text-sm text-gray-500">Asunto</span>
+                <span className="text-sm">{reservation.subject}</span>
+              </div>
+            )}
+          </div>
+
+          <div className="flex gap-3 pt-2">
+            <button
+              onClick={onClose}
+              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50"
+            >
+              Cerrar
+            </button>
+            {isOwner && (
+              <button
+                onClick={() => onCancel(reservation.id, reservation.employee_id)}
+                disabled={loading}
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 disabled:opacity-50"
+              >
+                {loading ? 'Cancelando...' : 'Cancelar Reserva'}
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

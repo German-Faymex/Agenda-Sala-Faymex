@@ -1,0 +1,13 @@
+@import "tailwindcss";
+
+@theme {
+  --color-faymex-red: #D82A34;
+  --color-faymex-red-dark: #B91C25;
+  --color-faymex-black: #1C2226;
+  --color-faymex-gray: #F3F4F6;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, sans-serif;
+}
