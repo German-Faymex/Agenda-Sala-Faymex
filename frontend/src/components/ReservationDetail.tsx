@@ -6,6 +6,7 @@ interface ReservationDetailProps {
   selectedEmployee: Employee | null;
   onClose: () => void;
   onCancel: (reservationId: number, employeeId: number) => void;
+  onOverride: (date: string, startTime: string) => void;
   loading: boolean;
 }
 
@@ -21,9 +22,12 @@ function formatReadableDate(dateStr: string): string {
 }
 
 export default function ReservationDetail({
-  reservation, selectedEmployee, onClose, onCancel, loading
+  reservation, selectedEmployee, onClose, onCancel, onOverride, loading
 }: ReservationDetailProps) {
   const isOwner = selectedEmployee?.id === reservation.employee_id;
+  const canOverride = selectedEmployee
+    && !isOwner
+    && selectedEmployee.hierarchy_level < reservation.employee_hierarchy;
   const [confirmCancel, setConfirmCancel] = useState(false);
 
   return (
@@ -59,6 +63,13 @@ export default function ReservationDetail({
             )}
           </div>
 
+          {/* Override option */}
+          {canOverride && (
+            <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 text-sm text-orange-800">
+              Tienes mayor jerarquía. Puedes reservar este horario y se le notificará a {reservation.employee_name}.
+            </div>
+          )}
+
           {/* Cancel confirmation */}
           {confirmCancel && (
             <div className="bg-red-50 border border-red-300 rounded-lg p-3 text-sm text-red-800">
@@ -67,13 +78,24 @@ export default function ReservationDetail({
             </div>
           )}
 
-          <div className="flex gap-3 pt-2">
+          <div className="flex gap-3 pt-2 flex-wrap">
             <button
               onClick={() => { setConfirmCancel(false); onClose(); }}
               className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50"
             >
               Cerrar
             </button>
+            {canOverride && (
+              <button
+                onClick={() => {
+                  onClose();
+                  onOverride(reservation.date, reservation.start_time);
+                }}
+                className="flex-1 px-4 py-2 bg-faymex-red text-white rounded-lg text-sm font-medium hover:bg-faymex-red-dark"
+              >
+                Reservar con prioridad
+              </button>
+            )}
             {isOwner && !confirmCancel && (
               <button
                 onClick={() => setConfirmCancel(true)}

@@ -202,6 +202,10 @@ export default function App() {
           selectedEmployee={selectedEmployee}
           onClose={() => setSelectedReservation(null)}
           onCancel={handleCancelReservation}
+          onOverride={(date, startTime) => {
+            setSelectedReservation(null);
+            setNewReservation({ date, startTime });
+          }}
           loading={loading}
         />
       )}
