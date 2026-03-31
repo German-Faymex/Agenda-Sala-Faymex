@@ -55,8 +55,8 @@ def validate_time_range(start_time: str, end_time: str) -> str | None:
     return None
 
 
-def validate_date(date_str: str) -> str | None:
-    """Validate date is a weekday within the allowed range."""
+def validate_date_and_time(date_str: str, start_time: str) -> str | None:
+    """Validate date is a weekday within the allowed range and time is not in the past."""
     try:
         d = date.fromisoformat(date_str)
     except ValueError:
@@ -69,6 +69,13 @@ def validate_date(date_str: str) -> str | None:
         return f"Solo se puede reservar hasta {MAX_ADVANCE_DAYS} días en adelante"
     if d.weekday() >= 5:  # Saturday=5, Sunday=6
         return "Solo se puede reservar de lunes a viernes"
+
+    # If booking for today, check that the start time hasn't already passed
+    if d == today:
+        now = datetime.now()
+        sh, sm = map(int, start_time.split(":"))
+        if (sh < now.hour) or (sh == now.hour and sm <= now.minute):
+            return "No se puede reservar en horarios que ya pasaron"
 
     return None
 
@@ -113,7 +120,7 @@ async def create_reservation(
         raise ValueError("Empleado inactivo")
 
     # Validate inputs
-    date_error = validate_date(date_str)
+    date_error = validate_date_and_time(date_str, start_time)
     if date_error:
         raise ValueError(date_error)
 

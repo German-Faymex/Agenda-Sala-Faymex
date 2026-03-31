@@ -92,7 +92,9 @@ export default function WeekCalendar({
               const dateStr = formatDate(d);
               const reservation = reservationMap[dateStr]?.[slot];
               const isToday = dateStr === today;
-              const isPast = dateStr < today;
+              const now = new Date();
+              const [slotH, slotM] = slot.split(':').map(Number);
+              const isSlotPast = dateStr < today || (isToday && (slotH < now.getHours() || (slotH === now.getHours() && slotM <= now.getMinutes())));
               const isFirstSlot = reservation && reservation.start_time === slot;
 
               // Calculate span for first slot of a reservation
@@ -141,7 +143,7 @@ export default function WeekCalendar({
                   key={i}
                   className={`border-r last:border-r-0 p-0.5 ${isToday ? 'bg-faymex-red/5' : ''}`}
                 >
-                  {!isPast && (
+                  {!isSlotPast && (
                     <button
                       onClick={() => onSlotClick(dateStr, slot)}
                       className="w-full h-full min-h-[2.5rem] rounded hover:bg-green-100 hover:border-green-300 border border-transparent transition-colors text-xs text-gray-400 hover:text-green-600"
