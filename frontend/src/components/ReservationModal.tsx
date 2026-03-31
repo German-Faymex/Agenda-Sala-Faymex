@@ -133,7 +133,7 @@ export default function ReservationModal({
               <option value={0}>Seleccionar empleado...</option>
               {employees.map(emp => (
                 <option key={emp.id} value={emp.id}>
-                  {emp.name} — {emp.position}
+                  {emp.name}
                 </option>
               ))}
             </select>
