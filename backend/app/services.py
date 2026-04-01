@@ -1,4 +1,5 @@
-from datetime import datetime, date, timedelta
+from datetime import datetime, date, timedelta, timezone
+from zoneinfo import ZoneInfo
 from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -8,6 +9,16 @@ from app.config import (
     BOOKING_START_HOUR, BOOKING_END_HOUR, BOOKING_END_MINUTE,
     SLOT_MINUTES, MAX_ADVANCE_DAYS, TIMEZONE
 )
+
+CHILE_TZ = ZoneInfo(TIMEZONE)
+
+
+def now_chile() -> datetime:
+    return datetime.now(CHILE_TZ)
+
+
+def today_chile() -> date:
+    return now_chile().date()
 from app.email_service import send_confirmation_email, send_cancellation_email
 
 
@@ -62,7 +73,7 @@ def validate_date_and_time(date_str: str, start_time: str) -> str | None:
     except ValueError:
         return "Fecha inválida"
 
-    today = date.today()
+    today = today_chile()
     if d < today:
         return "No se puede reservar en fechas pasadas"
     if d > today + timedelta(days=MAX_ADVANCE_DAYS):
@@ -72,7 +83,7 @@ def validate_date_and_time(date_str: str, start_time: str) -> str | None:
 
     # If booking for today, check that the start time hasn't already passed
     if d == today:
-        now = datetime.now()
+        now = now_chile()
         sh, sm = map(int, start_time.split(":"))
         if (sh < now.hour) or (sh == now.hour and sm <= now.minute):
             return "No se puede reservar en horarios que ya pasaron"
