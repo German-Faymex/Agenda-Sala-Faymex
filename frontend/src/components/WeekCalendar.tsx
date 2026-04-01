@@ -55,7 +55,7 @@ export default function WeekCalendar({
           const [slotH, slotM] = slot.split(':').map(Number);
 
           return (
-            <div key={slot} className="grid grid-cols-[90px_repeat(5,1fr)] border-b relative">
+            <div key={slot} className="grid grid-cols-[90px_repeat(5,1fr)] border-b relative" style={{ height: '44px' }}>
               {/* Current time indicator */}
               {slotH === currentHour && currentMinute >= slotM && currentMinute < slotM + 30 && (
                 <div
@@ -106,7 +106,7 @@ export default function WeekCalendar({
                             ? 'bg-faymex-red text-white hover:brightness-110'
                             : 'bg-faymex-black/80 text-white hover:bg-faymex-black'}
                         `}
-                        style={{ height: `calc(${spanCount} * 100% - 2px)` }}
+                        style={{ height: `${spanCount * 44 - 2}px` }}
                         title={`${reservation.employee_name} - ${reservation.employee_position}${reservation.subject ? '\n' + reservation.subject : ''}`}
                       >
                         <div className="font-semibold truncate">{reservation.employee_name}</div>
@@ -127,7 +127,7 @@ export default function WeekCalendar({
                     {!isSlotPast && (
                       <button
                         onClick={() => onSlotClick(dateStr, slot)}
-                        className="w-full min-h-[2.25rem] rounded-md border border-dashed border-transparent hover:border-green-400 hover:bg-green-50 transition-colors flex items-center justify-center"
+                        className="w-full h-full rounded-md border border-dashed border-transparent hover:border-green-400 hover:bg-green-50 transition-colors flex items-center justify-center"
                       >
                         <span className="text-sm text-transparent hover:text-green-600 transition-colors">
                           Reservar
