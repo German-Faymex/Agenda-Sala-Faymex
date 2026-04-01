@@ -55,7 +55,7 @@ export default function WeekCalendar({
           const [slotH, slotM] = slot.split(':').map(Number);
 
           return (
-            <div key={slot} className="grid grid-cols-[90px_repeat(5,1fr)] border-b relative" style={{ height: '44px' }}>
+            <div key={slot} className="grid grid-cols-[90px_repeat(5,1fr)] border-b relative overflow-visible" style={{ height: '44px' }}>
               {/* Current time indicator */}
               {slotH === currentHour && currentMinute >= slotM && currentMinute < slotM + 30 && (
                 <div
@@ -97,16 +97,16 @@ export default function WeekCalendar({
                   return (
                     <div
                       key={i}
-                      className={`border-r last:border-r-0 p-0.5 relative ${isToday ? 'bg-faymex-red/5' : ''} ${isSlotPast ? 'bg-gray-100' : ''}`}
+                      className={`border-r last:border-r-0 p-0.5 relative overflow-visible ${isToday ? 'bg-faymex-red/5' : ''} ${isSlotPast ? 'bg-gray-100' : ''}`}
                     >
                       <button
                         onClick={() => onReservationClick(reservation)}
-                        className={`absolute inset-x-0.5 top-0.5 rounded-md px-3 py-1.5 text-sm text-left transition-all z-10 overflow-hidden
+                        className={`absolute left-0.5 right-0.5 top-0.5 rounded-md px-3 py-1.5 text-sm text-left transition-all z-10
                           ${isMyReservation
                             ? 'bg-faymex-red text-white hover:brightness-110'
                             : 'bg-faymex-black/80 text-white hover:bg-faymex-black'}
                         `}
-                        style={{ height: `${spanCount * 44 - 2}px` }}
+                        style={{ height: `${spanCount * 44 - 4}px` }}
                         title={`${reservation.employee_name} - ${reservation.employee_position}${reservation.subject ? '\n' + reservation.subject : ''}`}
                       >
                         <div className="font-semibold truncate">{reservation.employee_name}</div>
