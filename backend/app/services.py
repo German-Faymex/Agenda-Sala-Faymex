@@ -1,3 +1,4 @@
+import asyncio
 from datetime import datetime, date, timedelta, timezone
 from zoneinfo import ZoneInfo
 from sqlalchemy import select, and_
@@ -186,23 +187,20 @@ async def create_reservation(
     await db.commit()
     await db.refresh(reservation)
 
-    # Send emails (fire and forget — don't fail the reservation if email fails)
-    try:
-        await send_confirmation_email(
+    # Send emails in background — don't block the reservation response
+    asyncio.create_task(
+        send_confirmation_email(
             employee.name, employee.email, date_str, start_time, end_time, subject
         )
-    except Exception:
-        pass
-
+    )
     for d in displaced:
-        try:
-            await send_cancellation_email(
+        asyncio.create_task(
+            send_cancellation_email(
                 d["name"], d["email"], date_str,
                 d["start_time"], d["end_time"],
                 employee.name, employee.position
             )
-        except Exception:
-            pass
+        )
 
     return {
         "reservation": reservation,
