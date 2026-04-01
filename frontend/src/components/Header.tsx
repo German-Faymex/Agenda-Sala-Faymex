@@ -7,7 +7,7 @@ export default function Header({ onAdminClick }: HeaderProps) {
     <header className="bg-faymex-black text-white">
       <div className="max-w-7xl mx-auto px-4 py-2 flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <img src="/logo-faymex.png" alt="Faymex" className="h-14 w-auto" />
+          <img src="/logo-faymex.png" alt="Faymex" className="h-12 w-auto rounded bg-white px-2 py-1" />
           <div>
             <h1 className="text-2xl font-bold leading-tight">Agenda Sala</h1>
             <p className="text-sm text-gray-400">Sala de Reuniones</p>
