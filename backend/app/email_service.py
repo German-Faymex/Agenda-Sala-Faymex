@@ -69,13 +69,16 @@ async def send_email(to: str, subject: str, html_body: str):
     msg.attach(MIMEText(html_body, "html"))
 
     try:
+        # Port 465 uses SSL/TLS directly, port 587 uses STARTTLS
+        use_tls = SMTP_PORT == 465
         await aiosmtplib.send(
             msg,
             hostname=SMTP_HOST,
             port=SMTP_PORT,
             username=SMTP_USER,
             password=SMTP_PASSWORD,
-            start_tls=True,
+            use_tls=use_tls,
+            start_tls=not use_tls,
         )
         logger.info("Email sent to %s", to)
         return True
