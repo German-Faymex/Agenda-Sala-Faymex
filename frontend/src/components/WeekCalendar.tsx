@@ -10,7 +10,7 @@ interface WeekCalendarProps {
   selectedEmployee: Employee | null;
 }
 
-const ROW_HEIGHT = 44;
+const ROW_HEIGHT = 72;
 
 function formatDate(d: Date): string {
   return d.toISOString().split('T')[0];
