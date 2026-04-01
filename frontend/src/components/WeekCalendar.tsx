@@ -109,14 +109,14 @@ export default function WeekCalendar({
                         {(position === 'first' || position === 'single') && (
                           <div className="font-semibold truncate text-sm leading-tight">{reservation.employee_name}</div>
                         )}
-                        {position === 'middle' && reservation.subject && (
+                        {(position === 'first' || position === 'single') && reservation.subject && (
                           <div className="truncate opacity-80 text-xs leading-tight">{reservation.subject}</div>
                         )}
-                        {(position === 'last') && (
+                        {(position === 'single' || position === 'last') && (
                           <div className="opacity-70 text-xs leading-tight">{reservation.start_time}-{reservation.end_time}</div>
                         )}
-                        {position === 'single' && (
-                          <div className="opacity-70 text-xs leading-tight">{reservation.start_time}-{reservation.end_time}</div>
+                        {position === 'middle' && reservation.subject && (
+                          <div className="truncate opacity-80 text-xs leading-tight">{reservation.subject}</div>
                         )}
                       </button>
                     </div>
