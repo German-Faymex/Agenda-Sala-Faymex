@@ -10,9 +10,6 @@ interface WeekCalendarProps {
   selectedEmployee: Employee | null;
 }
 
-const DAYS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
-const DAYS_SHORT = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie'];
-
 function formatDate(d: Date): string {
   return d.toISOString().split('T')[0];
 }
@@ -53,27 +50,6 @@ export default function WeekCalendar({
   return (
     <div className="overflow-x-auto">
       <div className="min-w-[700px]">
-        {/* Header */}
-        <div className="grid grid-cols-[90px_repeat(5,1fr)] border-b bg-faymex-gray">
-          <div className="p-3 text-sm font-medium text-gray-500 border-r">Hora</div>
-          {dates.map((d, i) => {
-            const dateStr = formatDate(d);
-            const isToday = dateStr === today;
-            return (
-              <div
-                key={i}
-                className={`p-3 text-center border-r last:border-r-0 ${isToday ? 'bg-faymex-red/10' : ''}`}
-              >
-                <div className="text-sm text-gray-500 hidden sm:block">{DAYS[i]}</div>
-                <div className="text-sm text-gray-500 sm:hidden">{DAYS_SHORT[i]}</div>
-                <div className={`text-lg font-semibold ${isToday ? 'text-faymex-red' : 'text-faymex-black'}`}>
-                  {d.getDate()}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
         {/* Time slots */}
         {slots.map((slot) => {
           const [slotH, slotM] = slot.split(':').map(Number);

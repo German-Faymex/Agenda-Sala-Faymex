@@ -5,6 +5,7 @@ import Header from './components/Header';
 import EmployeeSelector from './components/EmployeeSelector';
 import WeekNavigator from './components/WeekNavigator';
 import WeekCalendar from './components/WeekCalendar';
+import DayHeader from './components/DayHeader';
 import ReservationModal from './components/ReservationModal';
 import ReservationDetail from './components/ReservationDetail';
 import AdminPanel from './components/AdminPanel';
@@ -170,6 +171,7 @@ export default function App() {
           canGoNext={canGoNext}
           canGoPrev={canGoPrev}
         />
+        <DayHeader weekStart={weekStart} />
       </div>
 
       <div className="bg-white shadow-sm">
