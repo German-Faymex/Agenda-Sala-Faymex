@@ -1,11 +1,13 @@
 import logging
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-
-import aiosmtplib
+import httpx
 from jinja2 import Template
 
-from app.config import SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, SMTP_FROM, APP_NAME
+from app.config import APP_NAME
+
+import os
+
+RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
+SENDER_EMAIL = os.getenv("SMTP_FROM", "sala@faymex.cl")
 
 logger = logging.getLogger(__name__)
 
@@ -58,30 +60,32 @@ CANCELLATION_TEMPLATE = Template("""
 
 
 async def send_email(to: str, subject: str, html_body: str):
-    if not SMTP_USER or not SMTP_PASSWORD:
-        logger.warning("SMTP not configured, skipping email to %s", to)
+    if not RESEND_API_KEY:
+        logger.warning("RESEND_API_KEY not configured, skipping email to %s", to)
         return False
 
-    msg = MIMEMultipart("alternative")
-    msg["From"] = SMTP_FROM
-    msg["To"] = to
-    msg["Subject"] = subject
-    msg.attach(MIMEText(html_body, "html"))
-
     try:
-        # Port 465 uses SSL/TLS directly, port 587 uses STARTTLS
-        use_tls = SMTP_PORT == 465
-        await aiosmtplib.send(
-            msg,
-            hostname=SMTP_HOST,
-            port=SMTP_PORT,
-            username=SMTP_USER,
-            password=SMTP_PASSWORD,
-            use_tls=use_tls,
-            start_tls=not use_tls,
-        )
-        logger.info("Email sent to %s", to)
-        return True
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                "https://api.resend.com/emails",
+                headers={
+                    "Authorization": f"Bearer {RESEND_API_KEY}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "from": f"Agenda Sala Faymex <{SENDER_EMAIL}>",
+                    "to": [to],
+                    "subject": subject,
+                    "html": html_body,
+                },
+                timeout=10,
+            )
+            if response.status_code in (200, 201):
+                logger.info("Email sent to %s via Resend", to)
+                return True
+            else:
+                logger.error("Resend error %s: %s", response.status_code, response.text)
+                return False
     except Exception as e:
         logger.error("Failed to send email to %s: %s", to, e)
         return False
