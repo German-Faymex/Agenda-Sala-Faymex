@@ -11,7 +11,6 @@ interface WeekCalendarProps {
 }
 
 const ROW_HEIGHT = 44;
-const TIME_COL = 90;
 
 function formatDate(d: Date): string {
   return d.toISOString().split('T')[0];
@@ -28,31 +27,31 @@ export default function WeekCalendar({
     });
   }, [weekStart]);
 
-  // Set of occupied slots per date (for hiding "Reservar" button)
-  const occupiedSlots = useMemo(() => {
-    const map: Record<string, Set<string>> = {};
+  // Map: date -> slot -> { reservation, position } where position = 'first' | 'middle' | 'last' | 'single'
+  const slotInfo = useMemo(() => {
+    const map: Record<string, Record<string, { reservation: Reservation; position: 'first' | 'middle' | 'last' | 'single' }>> = {};
     for (const r of reservations) {
-      if (!map[r.date]) map[r.date] = new Set();
+      if (!map[r.date]) map[r.date] = {};
+
+      const coveredSlots: string[] = [];
       let slotTime = r.start_time;
       while (slotTime < r.end_time) {
-        map[r.date].add(slotTime);
+        coveredSlots.push(slotTime);
         const [h, m] = slotTime.split(':').map(Number);
         slotTime = m + 30 >= 60
           ? `${String(h + 1).padStart(2, '0')}:00`
           : `${String(h).padStart(2, '0')}:30`;
       }
+
+      for (let idx = 0; idx < coveredSlots.length; idx++) {
+        const pos = coveredSlots.length === 1 ? 'single'
+          : idx === 0 ? 'first'
+          : idx === coveredSlots.length - 1 ? 'last'
+          : 'middle';
+        map[r.date][coveredSlots[idx]] = { reservation: r, position: pos };
+      }
     }
     return map;
-  }, [reservations]);
-
-  // Unique reservations for overlay rendering
-  const uniqueReservations = useMemo(() => {
-    const seen = new Set<number>();
-    return reservations.filter(r => {
-      if (seen.has(r.id)) return false;
-      seen.add(r.id);
-      return true;
-    });
   }, [reservations]);
 
   const today = formatDate(new Date());
@@ -62,8 +61,7 @@ export default function WeekCalendar({
 
   return (
     <div className="overflow-x-auto">
-      <div className="min-w-[700px] relative">
-        {/* Background grid: time labels + empty slot cells */}
+      <div className="min-w-[700px]">
         {slots.map((slot) => {
           const [slotH, slotM] = slot.split(':').map(Number);
 
@@ -82,18 +80,56 @@ export default function WeekCalendar({
               <div className="p-2 text-sm text-gray-500 border-r flex items-center justify-center font-mono">
                 {slot}
               </div>
+
               {dates.map((d, i) => {
                 const dateStr = formatDate(d);
                 const isToday = dateStr === today;
                 const isSlotPast = dateStr < today || (isToday && (slotH < currentHour || (slotH === currentHour && slotM <= currentMinute)));
-                const isOccupied = occupiedSlots[dateStr]?.has(slot);
+                const info = slotInfo[dateStr]?.[slot];
 
+                // Occupied slot — part of a reservation
+                if (info) {
+                  const { reservation, position } = info;
+                  const isMyReservation = selectedEmployee?.id === reservation.employee_id;
+                  const bgColor = isMyReservation ? 'bg-faymex-red' : 'bg-faymex-black/80';
+                  const hoverColor = isMyReservation ? 'hover:brightness-110' : 'hover:bg-faymex-black';
+                  const roundTop = position === 'first' || position === 'single' ? 'rounded-t-md' : '';
+                  const roundBottom = position === 'last' || position === 'single' ? 'rounded-b-md' : '';
+
+                  return (
+                    <div
+                      key={i}
+                      className={`border-r last:border-r-0 px-0.5 ${position === 'first' || position === 'single' ? 'pt-0.5' : ''} ${position === 'last' || position === 'single' ? 'pb-0.5' : ''}`}
+                    >
+                      <button
+                        onClick={() => onReservationClick(reservation)}
+                        className={`w-full h-full ${bgColor} ${hoverColor} text-white text-left px-3 flex flex-col justify-center transition-all ${roundTop} ${roundBottom}`}
+                        title={`${reservation.employee_name}${reservation.subject ? ' — ' + reservation.subject : ''}\n${reservation.start_time}-${reservation.end_time}`}
+                      >
+                        {(position === 'first' || position === 'single') && (
+                          <div className="font-semibold truncate text-sm leading-tight">{reservation.employee_name}</div>
+                        )}
+                        {position === 'middle' && reservation.subject && (
+                          <div className="truncate opacity-80 text-xs leading-tight">{reservation.subject}</div>
+                        )}
+                        {(position === 'last') && (
+                          <div className="opacity-70 text-xs leading-tight">{reservation.start_time}-{reservation.end_time}</div>
+                        )}
+                        {position === 'single' && (
+                          <div className="opacity-70 text-xs leading-tight">{reservation.start_time}-{reservation.end_time}</div>
+                        )}
+                      </button>
+                    </div>
+                  );
+                }
+
+                // Empty slot
                 return (
                   <div
                     key={i}
                     className={`border-r last:border-r-0 p-1 ${isToday ? 'bg-faymex-red/5' : ''} ${isSlotPast ? 'bg-gray-100' : ''}`}
                   >
-                    {!isSlotPast && !isOccupied && (
+                    {!isSlotPast && (
                       <button
                         onClick={() => onSlotClick(dateStr, slot)}
                         className="w-full h-full rounded-md border border-dashed border-transparent hover:border-green-400 hover:bg-green-50 transition-colors flex items-center justify-center"
@@ -107,47 +143,6 @@ export default function WeekCalendar({
                 );
               })}
             </div>
-          );
-        })}
-
-        {/* Reservation overlays — absolutely positioned on top of the grid */}
-        {uniqueReservations.map(reservation => {
-          const startIdx = slots.indexOf(reservation.start_time);
-          const endIdx = slots.indexOf(reservation.end_time) === -1
-            ? slots.length
-            : slots.indexOf(reservation.end_time);
-          if (startIdx === -1) return null;
-
-          const dayIdx = dates.findIndex(d => formatDate(d) === reservation.date);
-          if (dayIdx === -1) return null;
-
-          const spanCount = endIdx - startIdx;
-          const top = startIdx * ROW_HEIGHT + 2;
-          const height = spanCount * ROW_HEIGHT - 4;
-          // Each day column: (100% - TIME_COL) / 5, offset by TIME_COL + dayIdx * colWidth
-          const left = `calc(${TIME_COL}px + ${dayIdx} * (100% - ${TIME_COL}px) / 5 + 3px)`;
-          const width = `calc((100% - ${TIME_COL}px) / 5 - 6px)`;
-
-          const isMyReservation = selectedEmployee?.id === reservation.employee_id;
-
-          return (
-            <button
-              key={reservation.id}
-              onClick={() => onReservationClick(reservation)}
-              className={`absolute rounded-md px-3 py-1.5 text-sm text-left transition-all z-10 overflow-hidden
-                ${isMyReservation
-                  ? 'bg-faymex-red text-white hover:brightness-110'
-                  : 'bg-faymex-black/80 text-white hover:bg-faymex-black'}
-              `}
-              style={{ top: `${top}px`, height: `${height}px`, left, width }}
-              title={`${reservation.employee_name}${reservation.subject ? ' — ' + reservation.subject : ''}`}
-            >
-              <div className="font-semibold truncate">{reservation.employee_name}</div>
-              {reservation.subject && (
-                <div className="truncate opacity-80 text-xs">{reservation.subject}</div>
-              )}
-              <div className="opacity-70 text-xs">{reservation.start_time}-{reservation.end_time}</div>
-            </button>
           );
         })}
       </div>
