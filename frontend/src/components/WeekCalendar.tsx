@@ -1,5 +1,6 @@
-import { useMemo } from 'react';
+import { useMemo, useRef, useEffect } from 'react';
 import type { Reservation, Employee } from '../types';
+import DayHeader from './DayHeader';
 
 interface WeekCalendarProps {
   weekStart: Date;
@@ -59,9 +60,26 @@ export default function WeekCalendar({
   const currentHour = now.getHours();
   const currentMinute = now.getMinutes();
 
+  // Auto-scroll to today's column on mobile
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const todayIndex = dates.findIndex(d => formatDate(d) === today);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el || todayIndex < 0) return;
+    // Each day column width = (totalWidth - 90px timeCol) / 5
+    // Scroll so today's column is roughly centered
+    const colWidth = (el.scrollWidth - 90) / 5;
+    const targetScroll = 90 + colWidth * todayIndex - el.clientWidth / 2 + colWidth / 2;
+    el.scrollLeft = Math.max(0, targetScroll);
+  }, [todayIndex, weekStart]);
+
   return (
-    <div className="overflow-x-auto">
+    <div ref={scrollRef} className="overflow-x-auto">
       <div className="min-w-[700px]">
+        <div className="sticky top-0 z-10">
+          <DayHeader weekStart={weekStart} />
+        </div>
         {slots.map((slot) => {
           const [slotH, slotM] = slot.split(':').map(Number);
 
