@@ -217,7 +217,13 @@ export default function App() {
           weekStart={weekStart}
           reservations={reservations}
           slots={slots}
-          onSlotClick={(date, startTime) => setNewReservation({ date, startTime })}
+          onSlotClick={(date, startTime) => {
+            if (!selectedEmployee) {
+              setToast({ message: 'Selecciona quién eres antes de reservar', type: 'error' });
+              return;
+            }
+            setNewReservation({ date, startTime });
+          }}
           onReservationClick={setSelectedReservation}
           selectedEmployee={selectedEmployee}
         />

@@ -44,7 +44,7 @@ export default function ReservationModal({
   date, startTime, slots, employees, selectedEmployee,
   existingReservations, onClose, onSubmit, loading
 }: ReservationModalProps) {
-  const [employeeId, setEmployeeId] = useState(selectedEmployee?.id || 0);
+  const employeeId = selectedEmployee?.id || 0;
   const [subject, setSubject] = useState('');
   const [showConfirm, setShowConfirm] = useState(false);
 
@@ -131,22 +131,12 @@ export default function ReservationModal({
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          {/* Employee selector */}
+          {/* Employee - fixed to selected identity */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Empleado</label>
-            <select
-              value={employeeId}
-              onChange={e => { setEmployeeId(Number(e.target.value)); setShowConfirm(false); }}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-faymex-red focus:border-faymex-red"
-              required
-            >
-              <option value={0}>Seleccionar empleado...</option>
-              {employees.map(emp => (
-                <option key={emp.id} value={emp.id}>
-                  {emp.name}
-                </option>
-              ))}
-            </select>
+            <div className="w-full border border-gray-200 bg-gray-50 rounded-lg px-3 py-2 text-sm text-gray-700">
+              {employees.find(e => e.id === employeeId)?.name || 'No seleccionado'}
+            </div>
           </div>
 
           {/* Duration */}
