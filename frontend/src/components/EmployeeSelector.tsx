@@ -14,8 +14,16 @@ export default function EmployeeSelector({ employees, selected, onSelect }: Empl
   const containerRef = useRef<HTMLDivElement>(null);
 
   const filtered = search.trim()
-    ? employees.filter(e => e.name.toLowerCase().includes(search.toLowerCase()))
+    ? employees.filter(e => e.name.toLowerCase().includes(search.toLowerCase()) || e.department.toLowerCase().includes(search.toLowerCase()))
     : employees;
+
+  // Group by department
+  const grouped = filtered.reduce<Record<string, typeof filtered>>((acc, emp) => {
+    const dept = emp.department || 'Sin departamento';
+    if (!acc[dept]) acc[dept] = [];
+    acc[dept].push(emp);
+    return acc;
+  }, {});
 
   // Close on click outside
   useEffect(() => {
@@ -75,15 +83,23 @@ export default function EmployeeSelector({ employees, selected, onSelect }: Empl
             {filtered.length === 0 ? (
               <div className="px-4 py-3 text-sm text-gray-400">No se encontraron resultados</div>
             ) : (
-              filtered.map(emp => (
-                <button
-                  key={emp.id}
-                  onClick={() => handleSelect(emp)}
-                  className={`w-full text-left px-4 py-2.5 text-sm hover:bg-faymex-red/10 transition-colors border-b border-gray-100 last:border-b-0
-                    ${selected?.id === emp.id ? 'bg-faymex-red/5 font-medium' : ''}`}
-                >
-                  {emp.name}
-                </button>
+              Object.entries(grouped).map(([dept, emps]) => (
+                <div key={dept}>
+                  <div className="px-4 py-1.5 text-xs font-semibold text-gray-400 uppercase tracking-wide bg-gray-50 sticky top-0">
+                    {dept}
+                  </div>
+                  {emps.map(emp => (
+                    <button
+                      key={emp.id}
+                      onClick={() => handleSelect(emp)}
+                      className={`w-full text-left px-4 py-2 hover:bg-faymex-red/10 transition-colors border-b border-gray-100 last:border-b-0
+                        ${selected?.id === emp.id ? 'bg-faymex-red/5 font-medium' : ''}`}
+                    >
+                      <div className="text-sm">{emp.name}</div>
+                      <div className="text-xs text-gray-400">{emp.position}</div>
+                    </button>
+                  ))}
+                </div>
               ))
             )}
           </div>

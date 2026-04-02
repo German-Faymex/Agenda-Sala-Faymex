@@ -45,7 +45,6 @@ export default function ReservationModal({
   existingReservations, onClose, onSubmit, loading
 }: ReservationModalProps) {
   const [employeeId, setEmployeeId] = useState(selectedEmployee?.id || 0);
-  const [endTime, setEndTime] = useState('');
   const [subject, setSubject] = useState('');
   const [showConfirm, setShowConfirm] = useState(false);
 
@@ -67,6 +66,16 @@ export default function ReservationModal({
     }
     return options;
   }, [slots, startTime]);
+
+  // Default to first option (30 min)
+  const [endTime, setEndTime] = useState(() => {
+    const startIdx = slots.indexOf(startTime);
+    if (startIdx === -1) return '';
+    const [h, m] = startTime.split(':').map(Number);
+    return m + 30 >= 60
+      ? `${String(h + 1).padStart(2, '0')}:00`
+      : `${String(h).padStart(2, '0')}:30`;
+  });
 
   // Check which end times would conflict
   const conflictInfo = useMemo(() => {

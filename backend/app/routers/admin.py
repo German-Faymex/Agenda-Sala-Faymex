@@ -1,8 +1,10 @@
 import io
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Query
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Header
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from openpyxl import load_workbook
+from email_validator import validate_email, EmailNotValidError
 
 from app.database import get_db
 from app.models import Employee
@@ -12,8 +14,8 @@ from app.config import ADMIN_PASSWORD
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
 
-def verify_admin(password: str = Query(...)):
-    if password != ADMIN_PASSWORD:
+def verify_admin(x_admin_password: str = Header(..., alias="X-Admin-Password")):
+    if x_admin_password != ADMIN_PASSWORD:
         raise HTTPException(status_code=403, detail="Contraseña incorrecta")
 
 
@@ -27,11 +29,10 @@ async def admin_login(data: AdminLogin):
 
 @router.get("/employees", response_model=list[EmployeeOut])
 async def list_all_employees(
-    password: str = Query(...),
+    _=Depends(verify_admin),
     db: AsyncSession = Depends(get_db)
 ):
     """List all employees (including inactive)."""
-    verify_admin(password)
     result = await db.execute(
         select(Employee).order_by(Employee.hierarchy_level, Employee.name)
     )
@@ -41,14 +42,17 @@ async def list_all_employees(
 @router.post("/employees", response_model=EmployeeOut)
 async def create_employee(
     data: EmployeeCreate,
-    password: str = Query(...),
+    _=Depends(verify_admin),
     db: AsyncSession = Depends(get_db)
 ):
     """Create a new employee."""
-    verify_admin(password)
     employee = Employee(**data.model_dump())
     db.add(employee)
-    await db.commit()
+    try:
+        await db.commit()
+    except IntegrityError:
+        await db.rollback()
+        raise HTTPException(status_code=400, detail=f"Ya existe un empleado con email {data.email}")
     await db.refresh(employee)
     return employee
 
@@ -57,11 +61,10 @@ async def create_employee(
 async def update_employee(
     employee_id: int,
     data: EmployeeCreate,
-    password: str = Query(...),
+    _=Depends(verify_admin),
     db: AsyncSession = Depends(get_db)
 ):
     """Update an employee."""
-    verify_admin(password)
     employee = await db.get(Employee, employee_id)
     if not employee:
         raise HTTPException(status_code=404, detail="Empleado no encontrado")
@@ -75,11 +78,10 @@ async def update_employee(
 @router.patch("/employees/{employee_id}/toggle")
 async def toggle_employee(
     employee_id: int,
-    password: str = Query(...),
+    _=Depends(verify_admin),
     db: AsyncSession = Depends(get_db)
 ):
     """Toggle active/inactive status of an employee."""
-    verify_admin(password)
     employee = await db.get(Employee, employee_id)
     if not employee:
         raise HTTPException(status_code=404, detail="Empleado no encontrado")
@@ -91,11 +93,10 @@ async def toggle_employee(
 @router.delete("/employees/{employee_id}")
 async def delete_employee(
     employee_id: int,
-    password: str = Query(...),
+    _=Depends(verify_admin),
     db: AsyncSession = Depends(get_db)
 ):
     """Permanently delete an employee."""
-    verify_admin(password)
     employee = await db.get(Employee, employee_id)
     if not employee:
         raise HTTPException(status_code=404, detail="Empleado no encontrado")
@@ -106,15 +107,14 @@ async def delete_employee(
 
 @router.post("/employees/bulk", response_model=BulkUploadResult)
 async def bulk_upload(
-    password: str = Query(...),
     file: UploadFile = File(...),
+    _=Depends(verify_admin),
     db: AsyncSession = Depends(get_db)
 ):
     """
     Bulk upload employees from Excel (.xlsx).
     Expected columns: nombre, email, cargo, departamento, nivel_jerarquia
     """
-    verify_admin(password)
 
     if not file.filename.endswith((".xlsx", ".xls")):
         raise HTTPException(status_code=400, detail="Solo se aceptan archivos Excel (.xlsx)")
@@ -143,7 +143,8 @@ async def bulk_upload(
                    f"Esperadas: nombre, email, cargo, departamento, nivel_jerarquia"
         )
 
-    created = 0
+    # Phase 1: Validate all rows first
+    validated = []
     errors = []
 
     for row_num, row in enumerate(rows[1:], start=2):
@@ -158,23 +159,38 @@ async def bulk_upload(
                 errors.append(f"Fila {row_num}: nombre o email vacío")
                 continue
 
+            try:
+                validate_email(email, check_deliverability=False)
+            except EmailNotValidError:
+                errors.append(f"Fila {row_num}: email inválido '{email}'")
+                continue
+
             if level not in (1, 2, 3, 4):
                 errors.append(f"Fila {row_num}: nivel_jerarquia debe ser 1-4")
                 continue
 
-            employee = Employee(
+            validated.append(dict(
                 name=name, email=email, position=position,
                 department=department, hierarchy_level=level
-            )
-            db.add(employee)
-            created += 1
+            ))
         except Exception as e:
             errors.append(f"Fila {row_num}: {str(e)}")
 
-    await db.commit()
     wb.close()
 
-    return BulkUploadResult(created=created, errors=errors)
+    if errors:
+        return BulkUploadResult(created=0, errors=errors)
+
+    # Phase 2: Insert all validated rows in a single transaction
+    for data in validated:
+        db.add(Employee(**data))
+    try:
+        await db.commit()
+    except IntegrityError:
+        await db.rollback()
+        return BulkUploadResult(created=0, errors=["Email duplicado encontrado. Ningún empleado fue creado."])
+
+    return BulkUploadResult(created=len(validated), errors=[])
 
 
 @router.get("/template")

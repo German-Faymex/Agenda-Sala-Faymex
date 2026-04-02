@@ -47,38 +47,44 @@ export const adminLogin = (password: string) =>
     body: JSON.stringify({ password }),
   });
 
+const adminHeaders = (password: string) => ({ 'X-Admin-Password': password });
+
 export const getAdminEmployees = (password: string) =>
-  request<import('./types').Employee[]>(`/api/admin/employees?password=${encodeURIComponent(password)}`);
+  request<import('./types').Employee[]>('/api/admin/employees', {
+    headers: adminHeaders(password),
+  });
 
 export const createEmployee = (password: string, data: Omit<import('./types').Employee, 'id' | 'active'>) =>
-  request<import('./types').Employee>(`/api/admin/employees?password=${encodeURIComponent(password)}`, {
+  request<import('./types').Employee>('/api/admin/employees', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...adminHeaders(password) },
     body: JSON.stringify(data),
   });
 
 export const updateEmployee = (password: string, id: number, data: Omit<import('./types').Employee, 'id' | 'active'>) =>
-  request<import('./types').Employee>(`/api/admin/employees/${id}?password=${encodeURIComponent(password)}`, {
+  request<import('./types').Employee>(`/api/admin/employees/${id}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...adminHeaders(password) },
     body: JSON.stringify(data),
   });
 
 export const toggleEmployee = (password: string, id: number) =>
-  request<{ message: string }>(`/api/admin/employees/${id}/toggle?password=${encodeURIComponent(password)}`, {
+  request<{ message: string }>(`/api/admin/employees/${id}/toggle`, {
     method: 'PATCH',
+    headers: adminHeaders(password),
   });
 
 export const deleteEmployee = (password: string, id: number) =>
-  request<{ message: string }>(`/api/admin/employees/${id}?password=${encodeURIComponent(password)}`, {
+  request<{ message: string }>(`/api/admin/employees/${id}`, {
     method: 'DELETE',
+    headers: adminHeaders(password),
   });
 
 export const bulkUploadEmployees = (password: string, file: File) => {
   const formData = new FormData();
   formData.append('file', file);
   return request<import('./types').BulkUploadResult>(
-    `/api/admin/employees/bulk?password=${encodeURIComponent(password)}`,
-    { method: 'POST', body: formData }
+    '/api/admin/employees/bulk',
+    { method: 'POST', headers: adminHeaders(password), body: formData }
   );
 };

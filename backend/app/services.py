@@ -227,8 +227,10 @@ async def get_reservations_for_date(db: AsyncSession, date_str: str) -> list[Res
 
 
 async def get_reservations_for_week(db: AsyncSession, start_date: str) -> list[Reservation]:
-    """Get all active reservations for a week starting from start_date."""
+    """Get all active reservations for a week starting from start_date (adjusted to Monday)."""
     start = date.fromisoformat(start_date)
+    # Adjust to Monday if not already
+    start = start - timedelta(days=start.weekday())
     end = start + timedelta(days=5)  # Mon-Fri
     result = await db.execute(
         select(Reservation)

@@ -6,6 +6,7 @@ interface DayHeaderProps {
 
 const DAYS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
 const DAYS_SHORT = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie'];
+const MONTHS_SHORT = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
 function formatDate(d: Date): string {
   return d.toISOString().split('T')[0];
@@ -22,12 +23,15 @@ export default function DayHeader({ weekStart }: DayHeaderProps) {
     });
   }, [weekStart]);
 
+  const mondayMonth = weekStart.getMonth();
+
   return (
     <div className="grid grid-cols-[90px_repeat(5,1fr)] border-b bg-faymex-gray min-w-[700px]">
       <div className="p-2 text-sm font-medium text-gray-500 border-r">Hora</div>
       {dates.map((d, i) => {
         const dateStr = formatDate(d);
         const isToday = dateStr === today;
+        const showMonth = d.getMonth() !== mondayMonth;
         return (
           <div
             key={i}
@@ -38,6 +42,9 @@ export default function DayHeader({ weekStart }: DayHeaderProps) {
             <div className={`text-lg font-semibold ${isToday ? 'text-faymex-red' : 'text-faymex-black'}`}>
               {d.getDate()}
             </div>
+            {showMonth && (
+              <div className="text-xs text-gray-400">{MONTHS_SHORT[d.getMonth()]}</div>
+            )}
           </div>
         );
       })}

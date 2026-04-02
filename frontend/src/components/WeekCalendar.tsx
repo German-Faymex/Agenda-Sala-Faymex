@@ -127,15 +127,18 @@ export default function WeekCalendar({
                 return (
                   <div
                     key={i}
-                    className={`border-r last:border-r-0 p-1 ${isToday ? 'bg-faymex-red/5' : ''} ${isSlotPast ? 'bg-gray-100' : ''}`}
+                    className={`border-r last:border-r-0 p-1 ${isToday && !isSlotPast ? 'bg-faymex-red/5' : ''} ${isSlotPast ? 'bg-gray-200/70' : ''}`}
+                    style={isSlotPast ? {
+                      backgroundImage: 'repeating-linear-gradient(135deg, transparent, transparent 4px, rgba(0,0,0,0.04) 4px, rgba(0,0,0,0.04) 5px)',
+                    } : undefined}
                   >
                     {!isSlotPast && (
                       <button
                         onClick={() => onSlotClick(dateStr, slot)}
-                        className="w-full h-full rounded-md border border-dashed border-transparent hover:border-green-400 hover:bg-green-50 transition-colors flex items-center justify-center"
+                        className="w-full h-full rounded-md border border-dashed border-transparent hover:border-green-400 hover:bg-green-50 transition-colors flex items-center justify-center group"
                       >
-                        <span className="text-sm text-transparent hover:text-green-600 transition-colors">
-                          Reservar
+                        <span className="text-xs text-gray-300 group-hover:text-green-600 transition-colors">
+                          +
                         </span>
                       </button>
                     )}

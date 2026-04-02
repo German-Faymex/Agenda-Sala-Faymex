@@ -48,6 +48,10 @@ export default function ReservationDetail({
               <span className="text-sm">{reservation.employee_position}</span>
             </div>
             <div className="flex justify-between">
+              <span className="text-sm text-gray-500">Departamento</span>
+              <span className="text-sm">{reservation.employee_department}</span>
+            </div>
+            <div className="flex justify-between">
               <span className="text-sm text-gray-500">Fecha</span>
               <span className="text-sm font-medium">{formatReadableDate(reservation.date)}</span>
             </div>
