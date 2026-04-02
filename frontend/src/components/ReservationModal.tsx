@@ -56,7 +56,8 @@ export default function ReservationModal({
     if (startIdx === -1) return [];
 
     const options: string[] = [];
-    for (let i = startIdx; i < slots.length; i++) {
+    const maxSlots = 4; // 4 x 30min = 2 hours max in dropdown
+    for (let i = startIdx; i < slots.length && options.length < maxSlots; i++) {
       const slot = slots[i];
       const [h, m] = slot.split(':').map(Number);
       const nextEnd = m + 30 >= 60
