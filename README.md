@@ -8,13 +8,17 @@ Sistema de reserva de sala de reuniones para Faymex. Permite a los empleados ver
 
 ### Para empleados
 - **Vista semanal** del calendario (lunes a viernes, 08:00 a 17:30)
-- **Buscar y seleccionarse** por nombre o apellido (se recuerda entre sesiones)
-- **Reservar** haciendo click en un slot disponible (bloques de 30 min, consecutivos permitidos)
-- **Cancelar** sus propias reservas
+- **Buscar y seleccionarse** por nombre o apellido, agrupados por departamento (se recuerda entre sesiones)
+- **Reservar** haciendo click en un slot disponible (bloques de 30 min a 2 horas)
+- **Identidad fija**: al reservar, el sistema usa tu identidad seleccionada — no se puede reservar como otra persona
+- **Cancelar** sus propias reservas (con doble confirmación)
 - **Prioridad jerárquica**: un empleado de mayor nivel puede desplazar la reserva de uno de menor nivel
 - **Indicador de hora actual** (línea roja en el día de hoy)
-- **Slots pasados** visualmente griseados (no se puede reservar en el pasado)
+- **Slots pasados** visualmente rayados (no se puede reservar en el pasado)
+- **Leyenda de colores**: rojo = mis reservas, gris oscuro = reservas de otros
+- **Detalle de reserva**: muestra nombre, cargo, departamento, fecha, horario y asunto
 - **Auto-actualización** cada 30 segundos
+- **Responsive mobile**: columna de horas sticky, auto-scroll al día de hoy, 3 días visibles
 
 ### Niveles de jerarquía (prioridad de reserva)
 | Nivel | Descripción | Puede desplazar a |
@@ -27,28 +31,28 @@ Sistema de reserva de sala de reuniones para Faymex. Permite a los empleados ver
 > Si dos personas del mismo nivel quieren el mismo horario, tiene prioridad quien reservó primero.
 
 ### Para administradores
-Acceder desde el botón **Admin** (arriba a la derecha).
+Acceder desde el botón **Admin** (arriba a la derecha). Protegido por contraseña via header HTTP.
 
-- **Agregar empleados** uno por uno
+- **Agregar empleados** uno por uno (con validación de email único)
 - **Carga masiva** desde Excel (.xlsx) con columnas: `nombre`, `email`, `cargo`, `departamento`, `nivel_jerarquia`
+  - Validación atómica: si alguna fila tiene error, no se crea ningún empleado
+  - Validación de formato de email
 - **Desactivar/Activar** empleados (soft delete)
 - **Eliminar** empleados permanentemente (con confirmación)
 
 ### Notificaciones por correo
-- **Confirmación** al reservar
+- **Confirmación** al reservar (via Resend API)
 - **Anulación** cuando alguien de mayor jerarquía desplaza tu reserva
-
-> Requiere configurar las variables SMTP en Railway (ver sección de configuración).
 
 ## Stack técnico
 
 | Componente | Tecnología |
 |------------|-----------|
 | Backend | Python 3.12, FastAPI, SQLAlchemy 2 (async), aiosqlite |
-| Frontend | React 19, TypeScript, Vite, Tailwind CSS v4 |
+| Frontend | React 19, TypeScript, Vite 8, Tailwind CSS v4 |
 | Base de datos | SQLite (con volumen persistente en Railway) |
 | Deploy | Railway (Dockerfile multi-stage) |
-| Email | aiosmtplib + Jinja2 templates |
+| Email | Resend API (sala@faymex.cl) |
 
 ## Estructura del proyecto
 
@@ -59,30 +63,32 @@ Agenda Sala Faymex/
 │   │   ├── main.py              # FastAPI app + SPA serving
 │   │   ├── config.py            # Variables de entorno
 │   │   ├── database.py          # SQLAlchemy async engine
-│   │   ├── models.py            # Employee, Reservation
+│   │   ├── models.py            # Employee (unique email), Reservation
 │   │   ├── schemas.py           # Pydantic schemas
 │   │   ├── services.py          # Lógica de negocio (reservas, validaciones, prioridad)
-│   │   ├── email_service.py     # Envío de correos HTML
+│   │   ├── email_service.py     # Envío de correos via Resend API
 │   │   ├── seed.py              # Datos iniciales
 │   │   └── routers/
 │   │       ├── employees.py     # GET /api/employees
 │   │       ├── reservations.py  # CRUD reservas + slots
-│   │       └── admin.py         # Panel admin (CRUD empleados, bulk upload)
+│   │       └── admin.py         # Panel admin (auth por header X-Admin-Password)
 │   └── requirements.txt
 ├── frontend/
 │   ├── src/
 │   │   ├── App.tsx              # Componente principal
-│   │   ├── api.ts               # Cliente API
+│   │   ├── api.ts               # Cliente API (admin auth via header)
 │   │   ├── types.ts             # TypeScript interfaces
+│   │   ├── index.css            # Tailwind + animaciones custom
 │   │   └── components/
 │   │       ├── Header.tsx
-│   │       ├── EmployeeSelector.tsx  # Buscador con autocompletado
+│   │       ├── EmployeeSelector.tsx  # Buscador agrupado por departamento
 │   │       ├── WeekNavigator.tsx
-│   │       ├── WeekCalendar.tsx      # Grilla semanal
-│   │       ├── ReservationModal.tsx  # Crear reserva
-│   │       ├── ReservationDetail.tsx # Ver/cancelar/override
+│   │       ├── DayHeader.tsx         # Headers con mes abreviado
+│   │       ├── WeekCalendar.tsx      # Grilla semanal + auto-scroll mobile
+│   │       ├── ReservationModal.tsx  # Crear reserva (identidad fija)
+│   │       ├── ReservationDetail.tsx # Ver/cancelar/override + departamento
 │   │       ├── AdminPanel.tsx
-│   │       └── Toast.tsx
+│   │       └── Toast.tsx             # Notificaciones con animación slideIn
 │   ├── public/
 │   │   ├── logo-faymex.png
 │   │   └── favicon.png
@@ -105,7 +111,7 @@ Agenda Sala Faymex/
 | POST | `/api/reservations` | Crear reserva (con lógica de prioridad) |
 | DELETE | `/api/reservations/{id}?employee_id=N` | Cancelar reserva propia |
 
-### Admin (requieren `?password=...`)
+### Admin (requieren header `X-Admin-Password`)
 | Método | Ruta | Descripción |
 |--------|------|-------------|
 | POST | `/api/admin/login` | Verificar contraseña |
@@ -121,8 +127,6 @@ Agenda Sala Faymex/
 ```bash
 # Backend
 cd backend
-python -m venv venv
-source venv/Scripts/activate  # Windows
 pip install -r requirements.txt
 uvicorn app.main:app --reload --port 8050
 
@@ -136,15 +140,12 @@ npm run dev
 ## Configuración en Railway
 
 ### Variables de entorno
-| Variable | Descripción | Valor actual |
-|----------|-------------|-------------|
-| `DATABASE_URL` | Ruta SQLite | `sqlite+aiosqlite:////data/agenda_sala.db` |
-| `ADMIN_PASSWORD` | Contraseña panel admin | `FaymexAdmin2026` |
-| `SMTP_HOST` | Servidor SMTP | (pendiente) |
-| `SMTP_PORT` | Puerto SMTP | `587` |
-| `SMTP_USER` | Usuario SMTP | (pendiente) |
-| `SMTP_PASSWORD` | Contraseña SMTP | (pendiente) |
-| `SMTP_FROM` | Email remitente | (pendiente) |
+| Variable | Descripción |
+|----------|-------------|
+| `DATABASE_URL` | `sqlite+aiosqlite:////data/agenda_sala.db` |
+| `ADMIN_PASSWORD` | Contraseña del panel admin |
+| `RESEND_API_KEY` | API key de Resend para emails |
+| `SMTP_FROM` | Email remitente (sala@faymex.cl) |
 
 ### Volumen
 - **Nombre**: `agenda-sala-faymex-volume`
@@ -164,7 +165,7 @@ El deploy es automático via Dockerfile multi-stage:
 
 ## Empleados cargados
 
-39 empleados de Casa Matriz cargados desde el Excel `BBDD CASA MATRIZ incial agenda salas.xlsx`:
+39 empleados de Casa Matriz:
 - 2 Nivel 1 (Gerente General + Director Ejecutivo)
 - 3 Nivel 2 (Gerentes)
 - 13 Nivel 3 (Jefaturas)
