@@ -67,16 +67,21 @@ export default function WeekCalendar({
   useEffect(() => {
     const el = scrollRef.current;
     if (!el || todayIndex < 0) return;
-    // Each day column width = (totalWidth - 90px timeCol) / 5
-    // Scroll so today's column is roughly centered
-    const colWidth = (el.scrollWidth - 90) / 5;
-    const targetScroll = 90 + colWidth * todayIndex - el.clientWidth / 2 + colWidth / 2;
-    el.scrollLeft = Math.max(0, targetScroll);
+    // On desktop (no overflow) don't scroll
+    if (el.scrollWidth <= el.clientWidth) return;
+    // Time col is 90px (sticky). Day columns = (700 - 90) / 5 = 122px each.
+    const timeColWidth = 90;
+    const colWidth = (el.scrollWidth - timeColWidth) / 5;
+    // Calculate how many day columns fit in the visible area after time col
+    const visibleDayCols = Math.floor((el.clientWidth - timeColWidth) / colWidth);
+    // Center today: scroll so today is in the middle of visible day columns
+    const offset = Math.max(0, todayIndex - Math.floor(visibleDayCols / 2));
+    el.scrollLeft = offset * colWidth;
   }, [todayIndex, weekStart]);
 
   return (
     <div ref={scrollRef} className="overflow-x-auto">
-      <div className="min-w-[700px]">
+      <div className="min-w-[500px] sm:min-w-[700px]">
         <div className="sticky top-0 z-10">
           <DayHeader weekStart={weekStart} />
         </div>
@@ -84,18 +89,18 @@ export default function WeekCalendar({
           const [slotH, slotM] = slot.split(':').map(Number);
 
           return (
-            <div key={slot} className="grid grid-cols-[90px_repeat(5,1fr)] border-b relative" style={{ height: `${ROW_HEIGHT}px` }}>
+            <div key={slot} className="grid grid-cols-[50px_repeat(5,1fr)] sm:grid-cols-[90px_repeat(5,1fr)] border-b relative" style={{ height: `${ROW_HEIGHT}px` }}>
               {/* Current time indicator */}
               {slotH === currentHour && currentMinute >= slotM && currentMinute < slotM + 30 && (
                 <div
-                  className="absolute left-[90px] right-0 border-t-2 border-faymex-red z-20 pointer-events-none"
+                  className="absolute left-[50px] sm:left-[90px] right-0 border-t-2 border-faymex-red z-20 pointer-events-none"
                   style={{ top: `${((currentMinute - slotM) / 30) * 100}%` }}
                 >
                   <div className="w-2.5 h-2.5 rounded-full bg-faymex-red -mt-[5px] -ml-[5px]" />
                 </div>
               )}
 
-              <div className="p-2 text-sm text-gray-500 border-r flex items-center justify-center font-mono">
+              <div className="p-1 sm:p-2 text-xs sm:text-sm text-gray-500 border-r flex items-center justify-center font-mono sticky left-0 bg-white z-10">
                 {slot}
               </div>
 
@@ -117,11 +122,11 @@ export default function WeekCalendar({
                   return (
                     <div
                       key={i}
-                      className={`border-r last:border-r-0 px-0.5 ${position === 'first' || position === 'single' ? 'pt-0.5' : ''} ${position === 'last' || position === 'single' ? 'pb-0.5' : ''}`}
+                      className={`border-r last:border-r-0 px-0.5 overflow-hidden ${position === 'first' || position === 'single' ? 'pt-0.5' : ''} ${position === 'last' || position === 'single' ? 'pb-0.5' : ''}`}
                     >
                       <button
                         onClick={() => onReservationClick(reservation)}
-                        className={`w-full h-full ${bgColor} ${hoverColor} text-white text-left px-3 flex flex-col justify-center transition-all ${roundTop} ${roundBottom}`}
+                        className={`w-full h-full ${bgColor} ${hoverColor} text-white text-left px-2 flex flex-col justify-center transition-all overflow-hidden ${roundTop} ${roundBottom}`}
                         title={`${reservation.employee_name}${reservation.subject ? ' — ' + reservation.subject : ''}\n${reservation.start_time}-${reservation.end_time}`}
                       >
                         {(position === 'first' || position === 'single') && (

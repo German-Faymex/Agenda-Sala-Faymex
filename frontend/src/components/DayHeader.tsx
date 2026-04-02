@@ -26,8 +26,8 @@ export default function DayHeader({ weekStart }: DayHeaderProps) {
   const mondayMonth = weekStart.getMonth();
 
   return (
-    <div className="grid grid-cols-[90px_repeat(5,1fr)] border-b bg-faymex-gray min-w-[700px]">
-      <div className="p-2 text-sm font-medium text-gray-500 border-r">Hora</div>
+    <div className="grid grid-cols-[50px_repeat(5,1fr)] sm:grid-cols-[90px_repeat(5,1fr)] border-b bg-faymex-gray min-w-[500px] sm:min-w-[700px]">
+      <div className="p-2 text-xs sm:text-sm font-medium text-gray-500 border-r sticky left-0 bg-faymex-gray z-10">Hora</div>
       {dates.map((d, i) => {
         const dateStr = formatDate(d);
         const isToday = dateStr === today;
