@@ -60,13 +60,15 @@ export default function WeekCalendar({
   const currentHour = now.getHours();
   const currentMinute = now.getMinutes();
 
-  // Auto-scroll to today's column on mobile
-  const scrollRef = useRef<HTMLDivElement>(null);
+  // Auto-scroll to today's column on mobile (scroll container is ancestor with data-calendar-scroll)
+  const innerRef = useRef<HTMLDivElement>(null);
   const todayIndex = dates.findIndex(d => formatDate(d) === today);
 
   useEffect(() => {
-    const el = scrollRef.current;
-    if (!el || todayIndex < 0) return;
+    const inner = innerRef.current;
+    if (!inner || todayIndex < 0) return;
+    const el = inner.closest('[data-calendar-scroll]') as HTMLElement | null;
+    if (!el) return;
     // On desktop (no overflow) don't scroll
     if (el.scrollWidth <= el.clientWidth) return;
     // Time col is 90px (sticky). Day columns = (700 - 90) / 5 = 122px each.
@@ -80,11 +82,10 @@ export default function WeekCalendar({
   }, [todayIndex, weekStart]);
 
   return (
-    <div ref={scrollRef} className="overflow-x-auto">
-      <div className="min-w-[500px] sm:min-w-[700px]">
-        <div className="sticky top-0 z-10">
-          <DayHeader weekStart={weekStart} />
-        </div>
+    <div ref={innerRef} className="min-w-[500px] sm:min-w-[700px]">
+      <div className="sticky top-0 z-10 bg-white">
+        <DayHeader weekStart={weekStart} />
+      </div>
         {slots.map((slot) => {
           const [slotH, slotM] = slot.split(':').map(Number);
 
@@ -171,7 +172,6 @@ export default function WeekCalendar({
             </div>
           );
         })}
-      </div>
     </div>
   );
 }

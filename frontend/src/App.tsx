@@ -181,8 +181,8 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-faymex-gray">
-      <div className="sticky top-0 z-30">
+    <div className="h-screen flex flex-col bg-faymex-gray">
+      <div className="flex-shrink-0">
         <Header onAdminClick={() => setShowAdmin(true)} />
         <EmployeeSelector
           employees={employees}
@@ -200,7 +200,7 @@ export default function App() {
       </div>
 
       {selectedEmployee && (
-        <div className="flex items-center gap-4 px-4 py-1.5 bg-white border-b text-xs text-gray-500">
+        <div className="flex-shrink-0 flex items-center gap-4 px-4 py-1.5 bg-white border-b text-xs text-gray-500">
           <span className="flex items-center gap-1.5">
             <span className="w-3 h-3 rounded-sm bg-faymex-red inline-block" />
             Mis reservas
@@ -212,7 +212,7 @@ export default function App() {
         </div>
       )}
 
-      <div className="bg-white shadow-sm">
+      <div data-calendar-scroll className="flex-1 min-h-0 overflow-auto bg-white shadow-sm">
         <WeekCalendar
           weekStart={weekStart}
           reservations={reservations}
